@@ -7,5 +7,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     $bootedAt = Carbon::parse(Cache::rememberForever('server_booted_at', fn () => now()->toIso8601String()));
 
-    return view('welcome', ['uptime' => $bootedAt->diffForHumans(null, true)]);
+    return view('welcome', [
+        'bootedAtIso' => $bootedAt->toIso8601String(),
+        'uptime' => $bootedAt->diffForHumans(null, true),
+    ]);
 });
