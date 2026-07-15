@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\EpisodeController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\UploadController;
@@ -65,6 +66,10 @@ Route::middleware('auth.token')->group(function () {
         Route::post('/videos', [VideoController::class, 'store']);
         Route::put('/videos/{video}', [VideoController::class, 'update']);
         Route::delete('/videos/{video}', [VideoController::class, 'destroy']);
+
+        Route::post('/videos/{video}/episodes', [EpisodeController::class, 'store']);
+        Route::put('/videos/{video}/episodes/{episode}', [EpisodeController::class, 'update']);
+        Route::delete('/videos/{video}/episodes/{episode}', [EpisodeController::class, 'destroy']);
 
         Route::post('/uploads/image', [UploadController::class, 'image']);
         Route::post('/uploads/video', [UploadController::class, 'video']);

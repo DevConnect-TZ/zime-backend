@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\VideoFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Video extends Model
 {
-    /** @use HasFactory<\Database\Factories\VideoFactory> */
+    /** @use HasFactory<VideoFactory> */
     use HasFactory;
 
     /**
@@ -57,5 +58,21 @@ class Video extends Model
     public function isSeries(): bool
     {
         return $this->type === 'series';
+    }
+
+    /**
+     * Admins manage everything; uploaders manage only their own uploads.
+     */
+    public function assertManageableBy(User $user): void
+    {
+        if ($user->isAdmin()) {
+            return;
+        }
+
+        abort_unless(
+            $user->isUploader() && $this->uploaded_by === $user->id,
+            403,
+            'You can only manage your own uploads.'
+        );
     }
 }

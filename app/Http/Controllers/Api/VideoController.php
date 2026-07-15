@@ -4,12 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\VideoResource;
-use App\Models\User;
 use App\Models\Video;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class VideoController extends Controller
@@ -46,18 +44,9 @@ class VideoController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $this->validateVideo($request, creating: true);
-        $episodes = $data['episodes'] ?? [];
-        unset($data['episodes']);
-
         $data['uploaded_by'] = $request->user()->id;
 
-        $video = DB::transaction(function () use ($data, $episodes) {
-            /** @var Video $video */
-            $video = Video::query()->create($data);
-            $this->syncEpisodes($video, $episodes);
-
-            return $video;
-        });
+        $video = Video::query()->create($data);
 
         return (new VideoResource($video->load('episodes')))
             ->response()
@@ -66,26 +55,17 @@ class VideoController extends Controller
 
     public function update(Request $request, Video $video): VideoResource
     {
-        $this->authorizeManage($request->user(), $video);
+        $video->assertManageableBy($request->user());
 
         $data = $this->validateVideo($request, creating: false);
-        $episodes = $data['episodes'] ?? null;
-        unset($data['episodes']);
-
-        DB::transaction(function () use ($video, $data, $episodes) {
-            $video->update($data);
-            if (is_array($episodes)) {
-                $video->episodes()->delete();
-                $this->syncEpisodes($video, $episodes);
-            }
-        });
+        $video->update($data);
 
         return new VideoResource($video->load('episodes'));
     }
 
     public function destroy(Request $request, Video $video): JsonResponse
     {
-        $this->authorizeManage($request->user(), $video);
+        $video->assertManageableBy($request->user());
 
         $video->delete();
 
@@ -118,20 +98,6 @@ class VideoController extends Controller
         ]);
     }
 
-    private function authorizeManage(User $user, Video $video): void
-    {
-        // Admins manage everything; uploaders manage only their own uploads.
-        if ($user->isAdmin()) {
-            return;
-        }
-
-        abort_unless(
-            $user->isUploader() && $video->uploaded_by === $user->id,
-            403,
-            'You can only manage your own uploads.'
-        );
-    }
-
     /**
      * @return array<string, mixed>
      */
@@ -153,28 +119,6 @@ class VideoController extends Controller
             'year' => ['sometimes', 'nullable', 'integer', 'min:1900', 'max:2100'],
             'is_trending' => ['sometimes', 'boolean'],
             'is_popular' => ['sometimes', 'boolean'],
-            'episodes' => ['sometimes', 'array'],
-            'episodes.*.title' => ['required_with:episodes', 'string', 'max:255'],
-            'episodes.*.season' => ['sometimes', 'integer', 'min:1'],
-            'episodes.*.episode' => ['sometimes', 'integer', 'min:1'],
-            'episodes.*.duration' => ['sometimes', 'nullable', 'string', 'max:40'],
-            'episodes.*.video_url' => ['sometimes', 'nullable', 'string', 'max:2048'],
         ]);
-    }
-
-    /**
-     * @param  array<int, array<string, mixed>>  $episodes
-     */
-    private function syncEpisodes(Video $video, array $episodes): void
-    {
-        foreach ($episodes as $episode) {
-            $video->episodes()->create([
-                'title' => $episode['title'],
-                'season' => $episode['season'] ?? 1,
-                'episode' => $episode['episode'] ?? 1,
-                'duration' => $episode['duration'] ?? null,
-                'video_url' => $episode['video_url'] ?? null,
-            ]);
-        }
     }
 }
