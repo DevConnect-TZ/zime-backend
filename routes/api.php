@@ -73,6 +73,7 @@ Route::middleware('auth.token')->group(function () {
 
         Route::post('/uploads/image', [UploadController::class, 'image']);
         Route::post('/uploads/video', [UploadController::class, 'video']);
+        Route::post('/uploads/video/chunk', [UploadController::class, 'videoChunk']);
     });
 
     /*
