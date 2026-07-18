@@ -84,6 +84,12 @@ class User extends Authenticatable
      */
     public function hasUnlocked(string $itemId, string $itemType): bool
     {
+        // Administrators oversee the full catalogue and can preview every
+        // protected title without creating artificial purchase records.
+        if ($this->isAdmin()) {
+            return true;
+        }
+
         if ($this->relationLoaded('purchases')) {
             return $this->purchases
                 ->where('item_id', $itemId)

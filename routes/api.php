@@ -48,6 +48,7 @@ Route::post('/payments/webhook/sonicpesa', [PaymentController::class, 'webhook']
 */
 Route::middleware('auth.token')->group(function () {
     Route::post('/videos/{video}/stream', [VideoController::class, 'stream']);
+    Route::post('/videos/{video}/episodes/{episode}/stream', [EpisodeController::class, 'stream']);
 
     Route::get('/transactions', [TransactionController::class, 'index']);
 

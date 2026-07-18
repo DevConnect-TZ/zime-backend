@@ -11,6 +11,29 @@ use Illuminate\Http\Request;
 
 class EpisodeController extends Controller
 {
+    public function stream(Request $request, Video $video, Episode $episode): JsonResponse
+    {
+        $this->assertBelongsToVideo($video, $episode);
+        abort_unless($video->isSeries(), 404);
+
+        if (! $request->user()->hasUnlocked((string) $video->id, 'series')) {
+            return response()->json(['message' => 'Purchase required to stream this episode.'], 403);
+        }
+
+        if (empty($episode->video_url)) {
+            return response()->json(['message' => 'This episode has no playable source yet.'], 404);
+        }
+
+        $video->increment('views');
+
+        return response()->json([
+            'data' => [
+                'url' => $episode->video_url,
+                'expires_at' => now()->addHours(6)->toIso8601String(),
+            ],
+        ]);
+    }
+
     public function store(Request $request, Video $video): JsonResponse
     {
         $video->assertManageableBy($request->user());

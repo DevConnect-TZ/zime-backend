@@ -20,11 +20,10 @@ class EpisodeResource extends JsonResource
         /** @var User|null $user */
         $user = $request->user();
 
-        // Uploaders/admins need the source to edit; buyers of the parent series
-        // need it to watch. Everyone else gets a locked episode listing.
-        $canSeeSource = $user !== null && (
-            $user->isUploader() || $user->hasUnlocked((string) $this->video_id, 'series')
-        );
+        // Only catalogue managers receive the stored source for editing.
+        // Viewers, including buyers, obtain a gated link from the episode
+        // stream endpoint so catalogue responses never expose every source.
+        $canSeeSource = $user?->isUploader() ?? false;
 
         return [
             'id' => $this->id,

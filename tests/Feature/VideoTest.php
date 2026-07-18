@@ -70,7 +70,7 @@ it('lets an admin toggle trending with a partial payload', function () {
         ->assertJsonPath('is_trending', true);
 });
 
-it('hides episode sources until the series is purchased', function () {
+it('keeps episode sources out of catalogue responses after purchase', function () {
     $user = User::factory()->create();
     $series = Video::factory()->series()->create();
     $series->episodes()->create([
@@ -91,8 +91,26 @@ it('hides episode sources until the series is purchased', function () {
 
     $this->getJson("/api/videos/{$series->id}", tokenHeader($user->fresh()))
         ->assertOk()
-        ->assertJsonPath('episodes.0.video_url', 'https://cdn.example.com/ep1.mp4')
+        ->assertJsonMissingPath('episodes.0.video_url')
         ->assertJsonPath('seasons', 1);
+});
+
+it('gates episode streaming behind a series purchase', function () {
+    $user = User::factory()->create();
+    $series = Video::factory()->series()->create();
+    $episode = $series->episodes()->create([
+        'title' => 'Pilot', 'season' => 1, 'episode' => 1,
+        'video_url' => 'https://cdn.example.com/ep1.mp4',
+    ]);
+
+    $endpoint = "/api/videos/{$series->id}/episodes/{$episode->id}/stream";
+    $this->postJson($endpoint, [], tokenHeader($user))->assertStatus(403);
+
+    Purchase::create(['user_id' => $user->id, 'item_id' => (string) $series->id, 'item_type' => 'series']);
+
+    $this->postJson($endpoint, [], tokenHeader($user->fresh()))
+        ->assertOk()
+        ->assertJsonPath('data.url', 'https://cdn.example.com/ep1.mp4');
 });
 
 it('gates streaming behind a purchase', function () {
@@ -107,4 +125,41 @@ it('gates streaming behind a purchase', function () {
     $this->postJson("/api/videos/{$video->id}/stream", [], tokenHeader($user))
         ->assertOk()
         ->assertJsonPath('data.url', 'https://cdn.example.com/movie.mp4');
+});
+
+it('lets an admin stream every movie without a purchase', function () {
+    $admin = User::factory()->admin()->create();
+    $video = Video::factory()->create(['video_link' => 'https://cdn.example.com/admin-preview.mp4']);
+
+    $this->getJson("/api/videos/{$video->id}", tokenHeader($admin))
+        ->assertOk()
+        ->assertJsonPath('purchased', true);
+
+    $this->postJson("/api/videos/{$video->id}/stream", [], tokenHeader($admin))
+        ->assertOk()
+        ->assertJsonPath('data.url', 'https://cdn.example.com/admin-preview.mp4');
+
+    $this->assertDatabaseMissing('purchases', [
+        'user_id' => $admin->id,
+        'item_id' => (string) $video->id,
+    ]);
+});
+
+it('lets an admin stream every series episode without a purchase', function () {
+    $admin = User::factory()->admin()->create();
+    $series = Video::factory()->series()->create();
+    $episode = $series->episodes()->create([
+        'title' => 'Admin Preview',
+        'season' => 1,
+        'episode' => 1,
+        'video_url' => 'https://cdn.example.com/admin-episode.mp4',
+    ]);
+
+    $this->getJson("/api/videos/{$series->id}", tokenHeader($admin))
+        ->assertOk()
+        ->assertJsonPath('purchased', true);
+
+    $this->postJson("/api/videos/{$series->id}/episodes/{$episode->id}/stream", [], tokenHeader($admin))
+        ->assertOk()
+        ->assertJsonPath('data.url', 'https://cdn.example.com/admin-episode.mp4');
 });
