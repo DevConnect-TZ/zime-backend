@@ -78,6 +78,7 @@ class UploadController extends Controller
      */
     private function assembleChunks(Request $request, string $chunkDir, int $total, string $extension): JsonResponse
     {
+        set_time_limit(0);
         $local = Storage::disk('local');
         $folder = $this->resolveFolder($request->input('folder'), 'videos');
         $assembledPath = $local->path($chunkDir.'/assembled');
