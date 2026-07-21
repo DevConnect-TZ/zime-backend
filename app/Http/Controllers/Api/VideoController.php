@@ -114,7 +114,7 @@ class VideoController extends Controller
 
         return response()->json([
             'data' => [
-                'url' => $video->video_link,
+                'url' => MediaController::playableUrl($request, $video->video_link),
                 'expires_at' => now()->addHours(6)->toIso8601String(),
             ],
         ]);

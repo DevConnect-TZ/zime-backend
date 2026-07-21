@@ -28,7 +28,7 @@ class EpisodeController extends Controller
 
         return response()->json([
             'data' => [
-                'url' => $episode->video_url,
+                'url' => MediaController::playableUrl($request, $episode->video_url),
                 'expires_at' => now()->addHours(6)->toIso8601String(),
             ],
         ]);

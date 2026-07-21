@@ -118,7 +118,7 @@ class UploadController extends Controller
         $local->deleteDirectory($chunkDir);
 
         return response()->json([
-            'url' => Storage::disk('public')->url($targetPath),
+            'url' => MediaController::playableUrl($request, $targetPath),
             'path' => $targetPath,
         ]);
     }
@@ -133,7 +133,7 @@ class UploadController extends Controller
         $path = $file->storeAs($folder, $filename, 'public');
 
         return response()->json([
-            'url' => Storage::disk('public')->url($path),
+            'url' => MediaController::playableUrl($request, $path),
             'path' => $path,
         ]);
     }

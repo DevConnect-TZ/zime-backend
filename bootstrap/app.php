@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\AuthenticateAccessToken;
+use App\Http\Middleware\EnsureUserHasRole;
+use App\Http\Middleware\OptionalAccessToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,10 +16,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Behind the production TLS-terminating proxy so request()->isSecure()
+        // and getSchemeAndHttpHost() reflect the real https:// scheme, which the
+        // media URLs and the Secure/SameSite refresh cookie both depend on.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
-            'auth.token' => \App\Http\Middleware\AuthenticateAccessToken::class,
-            'auth.optional' => \App\Http\Middleware\OptionalAccessToken::class,
-            'role' => \App\Http\Middleware\EnsureUserHasRole::class,
+            'auth.token' => AuthenticateAccessToken::class,
+            'auth.optional' => OptionalAccessToken::class,
+            'role' => EnsureUserHasRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

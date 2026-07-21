@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\EpisodeController;
+use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\UploadController;
@@ -32,6 +33,13 @@ Route::middleware('auth.optional')->group(function () {
     Route::get('/videos', [VideoController::class, 'index']);
     Route::get('/videos/{video}', [VideoController::class, 'show']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Media streaming (app-served so it never depends on the storage symlink)
+|--------------------------------------------------------------------------
+*/
+Route::get('/media/{path}', [MediaController::class, 'show'])->where('path', '.*');
 
 /*
 |--------------------------------------------------------------------------
