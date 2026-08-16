@@ -48,6 +48,14 @@ class Video extends Model
     }
 
     /**
+     * @return HasMany<VideoPlay, $this>
+     */
+    public function plays(): HasMany
+    {
+        return $this->hasMany(VideoPlay::class);
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function uploader(): BelongsTo

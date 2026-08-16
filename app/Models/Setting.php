@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Crypt;
 
 #[Fillable(['key', 'value'])]
 class Setting extends Model
@@ -32,5 +33,26 @@ class Setting extends Model
     public static function put(string $key, mixed $value): void
     {
         static::query()->updateOrCreate(['key' => $key], ['value' => $value]);
+    }
+
+    public static function getSecret(string $key): ?string
+    {
+        $value = static::get($key);
+
+        if (empty($value)) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString((string) $value);
+        } catch (\Throwable) {
+            // Supports credentials saved before encryption was introduced.
+            return (string) $value;
+        }
+    }
+
+    public static function setSecret(string $key, string $value): void
+    {
+        static::put($key, Crypt::encryptString($value));
     }
 }

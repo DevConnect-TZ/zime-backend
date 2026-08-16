@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\EpisodeController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\UserController;
@@ -95,6 +97,10 @@ Route::middleware('auth.token')->group(function () {
         Route::put('/users/{user}/role', [UserController::class, 'updateRole']);
         Route::put('/users/{user}/status', [UserController::class, 'updateStatus']);
         Route::post('/users/{user}/unlock-video', [UserController::class, 'unlockVideo']);
+
+        Route::get('/admin/settings', [SettingController::class, 'gatewaySettings']);
+        Route::put('/admin/settings', [SettingController::class, 'updateGatewaySettings']);
+        Route::get('/admin/analytics', [AnalyticsController::class, 'index']);
 
         Route::put('/payments/gateway', [PaymentController::class, 'updateGateway']);
     });

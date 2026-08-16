@@ -14,14 +14,12 @@ class PaymentService
 {
     public const SETTING_ACTIVE_GATEWAY = 'active_payment_gateway';
 
-    public const SUPPORTED_GATEWAYS = ['sonicpesa'];
+    public const SUPPORTED_GATEWAYS = ['sonicpesa', 'mobilipa'];
 
     /**
      * @param  array<string, PaymentGateway>  $gateways  keyed by provider name
      */
-    public function __construct(private readonly array $gateways)
-    {
-    }
+    public function __construct(private readonly array $gateways) {}
 
     public function activeProvider(): string
     {

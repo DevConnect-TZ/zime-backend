@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\EpisodeResource;
 use App\Models\Episode;
 use App\Models\Video;
+use App\Models\VideoPlay;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -25,6 +26,13 @@ class EpisodeController extends Controller
         }
 
         $video->increment('views');
+
+        VideoPlay::query()->create([
+            'video_id' => $video->id,
+            'episode_id' => $episode->id,
+            'user_id' => $request->user()->id,
+            'played_at' => now(),
+        ]);
 
         return response()->json([
             'data' => [

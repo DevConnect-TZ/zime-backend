@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Services\FirebaseTokenVerifier;
+use App\Services\Payments\MobiliPaGateway;
 use App\Services\Payments\PaymentService;
 use App\Services\Payments\SonicPesaGateway;
 use App\Services\TokenService;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
@@ -38,9 +40,16 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(MobiliPaGateway::class, function () {
+            return new MobiliPaGateway(
+                baseUrl: (string) config('services.mobilipa.base_url'),
+            );
+        });
+
         $this->app->singleton(PaymentService::class, function ($app) {
             return new PaymentService([
                 'sonicpesa' => $app->make(SonicPesaGateway::class),
+                'mobilipa' => $app->make(MobiliPaGateway::class),
             ]);
         });
     }
@@ -59,13 +68,13 @@ class AppServiceProvider extends ServiceProvider
         }
 
         RateLimiter::for('auth', function ($request) {
-            return \Illuminate\Cache\RateLimiting\Limit::perMinute(20)->by($request->ip());
+            return Limit::perMinute(20)->by($request->ip());
         });
 
         RateLimiter::for('payments', function ($request) {
             $key = optional($request->user())->id ?: $request->ip();
 
-            return \Illuminate\Cache\RateLimiting\Limit::perMinute(30)->by((string) $key);
+            return Limit::perMinute(30)->by((string) $key);
         });
     }
 }
