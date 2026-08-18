@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use App\Services\FirebaseTokenVerifier;
-use App\Services\Payments\MobiliPaGateway;
 use App\Services\Payments\PaymentService;
 use App\Services\Payments\SonicPesaGateway;
 use App\Services\TokenService;
@@ -40,16 +39,9 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
-        $this->app->singleton(MobiliPaGateway::class, function () {
-            return new MobiliPaGateway(
-                baseUrl: (string) config('services.mobilipa.base_url'),
-            );
-        });
-
         $this->app->singleton(PaymentService::class, function ($app) {
             return new PaymentService([
                 'sonicpesa' => $app->make(SonicPesaGateway::class),
-                'mobilipa' => $app->make(MobiliPaGateway::class),
             ]);
         });
     }

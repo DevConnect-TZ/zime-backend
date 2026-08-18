@@ -46,10 +46,6 @@ return [
         'webhook_secret' => env('SONICPESA_WEBHOOK_SECRET', env('SONICPESA_API_SECRET')),
     ],
 
-    'mobilipa' => [
-        'base_url' => env('MOBILIPA_BASE_URL', 'https://api.mobilipa.store'),
-    ],
-
     'auth_tokens' => [
         'access_ttl' => (int) env('ACCESS_TOKEN_TTL', 900),
         'refresh_ttl' => (int) env('REFRESH_TOKEN_TTL', 60 * 60 * 24 * 30),

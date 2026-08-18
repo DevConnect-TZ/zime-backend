@@ -14,7 +14,7 @@ class PaymentService
 {
     public const SETTING_ACTIVE_GATEWAY = 'active_payment_gateway';
 
-    public const SUPPORTED_GATEWAYS = ['sonicpesa', 'mobilipa'];
+    public const SUPPORTED_GATEWAYS = ['sonicpesa'];
 
     /**
      * @param  array<string, PaymentGateway>  $gateways  keyed by provider name
