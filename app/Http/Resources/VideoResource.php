@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Controllers\Api\MediaController;
 use App\Models\User;
 use App\Models\Video;
 use Illuminate\Http\Request;
@@ -29,7 +30,7 @@ class VideoResource extends JsonResource
             'type' => $this->type,
             'price' => (float) $this->price,
             'thumbnail' => $this->thumbnail,
-            'trailer_url' => $this->trailer_url,
+            'trailer_url' => $this->playable($request, $this->trailer_url),
             'genre' => $this->genre,
             'rating' => $this->rating,
             'duration' => $this->duration,
@@ -45,5 +46,15 @@ class VideoResource extends JsonResource
             // Regular playback goes through the gated /videos/{id}/stream endpoint.
             'video_link' => $this->when($isManager, $this->video_link),
         ];
+    }
+
+    /**
+     * Normalise a stored media value into a playable URL. Hosted trailers need
+     * the short-lived access token attached so the <video> tag (which cannot
+     * send auth headers) can load them through the gated media route.
+     */
+    private function playable(Request $request, ?string $stored): ?string
+    {
+        return MediaController::playableUrl($request, $stored, $request->bearerToken());
     }
 }
