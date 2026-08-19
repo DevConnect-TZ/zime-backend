@@ -139,7 +139,7 @@ class VideoController extends Controller
         $rules = [
             'title' => [$required, 'string', 'max:255'],
             'type' => [$required, Rule::in(['single', 'series'])],
-            'price' => [$required, 'numeric', 'min:0', 'max:100000000'],
+            'price' => [$required, 'integer', 'min:0', 'max:100000000'],
             'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'thumbnail' => ['sometimes', 'nullable', 'string', 'max:2048'],
             'trailer_url' => ['sometimes', 'nullable', 'string', 'max:2048'],

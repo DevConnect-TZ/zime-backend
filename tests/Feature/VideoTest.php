@@ -52,6 +52,26 @@ it('allows an uploader to create a video', function () {
     $this->assertDatabaseHas('videos', ['title' => 'Uploader Movie', 'uploaded_by' => $uploader->id]);
 });
 
+it('only accepts whole-shilling integer prices', function () {
+    $uploader = User::factory()->uploader()->create();
+
+    $this->postJson('/api/videos', [
+        'title' => 'Float Price',
+        'type' => 'single',
+        'price' => 1000.5,
+    ], tokenHeader($uploader))->assertStatus(422);
+
+    $this->postJson('/api/videos', [
+        'title' => 'Int Price',
+        'type' => 'single',
+        'price' => 1000,
+    ], tokenHeader($uploader))->assertCreated();
+
+    $video = Video::query()->where('title', 'Int Price')->first();
+
+    expect((int) $video->price)->toBe(1000);
+});
+
 it('prevents an uploader from editing another uploaders video', function () {
     $owner = User::factory()->uploader()->create();
     $other = User::factory()->uploader()->create();

@@ -21,7 +21,7 @@ class TransactionResource extends JsonResource
             'transaction_id' => $this->transaction_id,
             'user_id' => $this->user_id,
             'user_email' => $this->whenLoaded('user', fn () => $this->user?->email, $this->buyer_email),
-            'amount' => (float) $this->amount,
+            'amount' => (int) $this->amount,
             'currency' => $this->currency,
             'status' => $this->status,
             'item_id' => $this->item_id,

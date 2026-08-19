@@ -66,7 +66,9 @@ class PaymentService
         }
 
         $gateway = $this->gateway();
-        $amount = (int) round((float) $video->price);
+        // TZS is treated as whole shillings only; the price is cast straight
+        // from the decimal string so no binary-float rounding can nudge it ±1.
+        $amount = (int) $video->price;
 
         $transaction = Transaction::query()->create([
             'transaction_id' => 'zt_'.Str::lower(Str::random(20)),

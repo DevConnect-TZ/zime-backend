@@ -28,7 +28,7 @@ class VideoResource extends JsonResource
             'title' => $this->title,
             'description' => $this->description,
             'type' => $this->type,
-            'price' => (float) $this->price,
+            'price' => (int) $this->price,
             'thumbnail' => $this->thumbnail,
             'trailer_url' => $this->playable($request, $this->trailer_url),
             'genre' => $this->genre,
