@@ -14,7 +14,23 @@ class UploadController extends Controller
     private const ALLOWED_FOLDERS = ['thumbnails', 'videos', 'trailers'];
 
     /** Real MIME types accepted for video sources. */
-    private const ALLOWED_VIDEO_MIMES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-matroska'];
+    private const ALLOWED_VIDEO_MIMES = [
+        'video/mp4',
+        'video/webm',
+        'video/quicktime',
+        'video/x-matroska',
+        'video/x-msvideo',
+        'video/msvideo',
+        'video/avi',
+        'application/x-troff-msvideo',
+        'video/x-flv',
+        'video/x-ms-wmv',
+        'video/mp2t',
+        'video/3gpp',
+        'video/ogg',
+        'video/x-m4v',
+        'application/octet-stream',
+    ];
 
     public function image(Request $request): JsonResponse
     {
