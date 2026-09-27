@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AuthenticateAccessToken;
 use App\Http\Middleware\EnsureUserHasRole;
+use App\Http\Middleware\ForceHttpsAndHsts;
 use App\Http\Middleware\OptionalAccessToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,6 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // and getSchemeAndHttpHost() reflect the real https:// scheme, which the
         // media URLs and the Secure/SameSite refresh cookie both depend on.
         $middleware->trustProxies(at: '*');
+
+        // Enforce HTTPS 301 and HSTS on all responses
+        $middleware->append(ForceHttpsAndHsts::class);
 
         $middleware->alias([
             'auth.token' => AuthenticateAccessToken::class,
