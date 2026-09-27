@@ -18,12 +18,26 @@ class AnalyticsController extends Controller
     public function index(): JsonResponse
     {
         $today = Carbon::today();
+        $dailySince = $today->copy()->subDays(29);
+        $weeklySince = $today->copy()->subWeeks(11)->startOfWeek();
+
+        // Optimized single-pass pluck for daily and weekly series
+        $recentPlays = VideoPlay::query()
+            ->where('played_at', '>=', $weeklySince)
+            ->pluck('played_at');
+
+        $dailyCounts = $recentPlays
+            ->filter(fn ($p) => $p >= $dailySince->toDateTimeString())
+            ->countBy(fn ($p) => substr((string) $p, 0, 10));
+
+        $weeklyCounts = $recentPlays
+            ->countBy(function ($p) {
+                $dt = Carbon::parse($p);
+                return (string) $dt->isoWeekYear() . $this->padIsoWeek((int) $dt->isoWeek());
+            });
 
         $daily = $this->seriesCounts(
-            $this->playsGroupedBy(
-                $this->playsSince($today->copy()->subDays(29)),
-                fn (Carbon $playedAt) => $playedAt->toDateString(),
-            ),
+            $dailyCounts,
             fn (Carbon $day) => $day->toDateString(),
             $today->copy()->subDays(29),
             30,
@@ -31,12 +45,9 @@ class AnalyticsController extends Controller
         );
 
         $weekly = $this->seriesCounts(
-            $this->playsGroupedBy(
-                $this->playsSince($today->copy()->subWeeks(11)->startOfWeek()),
-                fn (Carbon $playedAt) => $playedAt->isoWeekYear().$this->padIsoWeek((int) $playedAt->isoWeek()),
-            ),
-            fn (Carbon $day) => (string) $day->isoWeekYear().$this->padIsoWeek((int) $day->isoWeek()),
-            $today->copy()->subWeeks(11)->startOfWeek(),
+            $weeklyCounts,
+            fn (Carbon $day) => (string) $day->isoWeekYear() . $this->padIsoWeek((int) $day->isoWeek()),
+            $weeklySince,
             12,
             fn (Carbon $day) => $day->addWeek(),
         );
@@ -66,22 +77,6 @@ class AnalyticsController extends Controller
                 'top_videos' => $topVideos,
             ],
         ]);
-    }
-
-    private function playsSince(Carbon $since): Collection
-    {
-        return VideoPlay::query()
-            ->where('played_at', '>=', $since)
-            ->pluck('played_at')
-            ->map(fn ($playedAt) => Carbon::parse($playedAt));
-    }
-
-    /**
-     * @return Collection<string, int> bucket label => play count
-     */
-    private function playsGroupedBy(Collection $plays, callable $bucketOf): Collection
-    {
-        return $plays->countBy(fn (Carbon $playedAt) => $bucketOf($playedAt));
     }
 
     /**
