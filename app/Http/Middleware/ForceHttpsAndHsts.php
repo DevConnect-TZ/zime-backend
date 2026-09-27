@@ -14,11 +14,14 @@ class ForceHttpsAndHsts
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if request was received over plain HTTP (respecting reverse proxies)
+        // Check if request was received over plain HTTP (respecting reverse proxies) or on www host
         $isHttps = $request->isSecure() || strtolower((string) $request->header('X-Forwarded-Proto')) === 'https';
+        $host = (string) $request->getHttpHost();
+        $isWww = str_starts_with($host, 'www.');
 
-        if (! $isHttps && app()->environment('production')) {
-            $secureUrl = 'https://'.$request->getHttpHost().$request->getRequestUri();
+        if ((! $isHttps || $isWww) && app()->environment('production')) {
+            $canonicalHost = $isWww ? preg_replace('/^www\./i', '', $host) : $host;
+            $secureUrl = 'https://'.$canonicalHost.$request->getRequestUri();
 
             return redirect()->to($secureUrl, 301);
         }
