@@ -64,12 +64,20 @@ class MediaController extends Controller
 
         $relative = self::relativePathFor($stored);
 
-        // Not one of our hosted files (e.g. an external CDN link) — leave as is.
+        // Not one of our hosted files (e.g. an external CDN link) — upgrade HTTP to HTTPS for mobile security
         if ($relative === null) {
-            return $stored;
+            if (str_starts_with($stored, 'http://') && !str_contains($stored, 'localhost') && !str_contains($stored, '127.0.0.1')) {
+                $stored = 'https://' . substr($stored, 7);
+            }
+            return str_replace(' ', '%20', $stored);
         }
 
         $base = $request->getSchemeAndHttpHost();
+        // Always force https for scheme if not local
+        if (str_starts_with($base, 'http://') && !str_contains($base, 'localhost') && !str_contains($base, '127.0.0.1')) {
+            $base = 'https://' . substr($base, 7);
+        }
+
         $prefix = (str_contains($request->getBaseUrl(), 'index.php') || app()->environment('production'))
             ? '/index.php/api/media/'
             : '/api/media/';
@@ -82,7 +90,7 @@ class MediaController extends Controller
             $url .= '?token='.urlencode($token);
         }
 
-        return $url;
+        return str_replace(' ', '%20', $url);
     }
 
     /**
