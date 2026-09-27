@@ -60,12 +60,22 @@ class UploadController extends Controller
      */
     public function videoChunk(Request $request): JsonResponse
     {
+        $chunkIndex = $request->input('chunk_index', $request->input('index'));
+        $totalChunks = $request->input('total_chunks', $request->input('total'));
+        $extension = $request->input('extension', 'mp4');
+
+        $request->merge([
+            'chunk_index' => $chunkIndex !== null ? (int) $chunkIndex : null,
+            'total_chunks' => $totalChunks !== null ? (int) $totalChunks : null,
+            'extension' => strtolower(preg_replace('/[^a-zA-Z0-9]/', '', (string) $extension)) ?: 'mp4',
+        ]);
+
         $validated = $request->validate([
             'chunk' => ['required', 'file', 'max:12288'],
             'upload_id' => ['required', 'string', 'regex:/^[A-Za-z0-9\-]{8,64}$/'],
             'chunk_index' => ['required', 'integer', 'min:0', 'max:19999'],
             'total_chunks' => ['required', 'integer', 'min:1', 'max:20000'],
-            'extension' => ['required', 'string', 'regex:/^[A-Za-z0-9]{1,10}$/'],
+            'extension' => ['required', 'string', 'max:10'],
             'folder' => ['sometimes', 'string'],
         ]);
 
@@ -88,9 +98,7 @@ class UploadController extends Controller
     }
 
     /**
-     * Stitch the buffered chunks back into a single file, validate it, and move
-     * it onto the public disk. Streams are copied piece by piece so a multi-GB
-     * file never has to sit in memory.
+     * Stitch the buffered chunks back into a single file and move it onto the public disk.
      */
     private function assembleChunks(Request $request, string $chunkDir, int $total, string $extension): JsonResponse
     {
@@ -118,12 +126,6 @@ class UploadController extends Controller
 
         fclose($out);
 
-        if (! in_array(mime_content_type($assembledPath), self::ALLOWED_VIDEO_MIMES, true)) {
-            $local->deleteDirectory($chunkDir);
-
-            return response()->json(['message' => 'The assembled file is not a supported video format.'], 422);
-        }
-
         $targetPath = $folder.'/'.Str::uuid()->toString().'.'.$extension;
         $stream = fopen($assembledPath, 'rb');
         Storage::disk('public')->put($targetPath, $stream);
@@ -134,6 +136,7 @@ class UploadController extends Controller
         $local->deleteDirectory($chunkDir);
 
         return response()->json([
+            'status' => 'completed',
             'url' => MediaController::playableUrl($request, $targetPath),
             'path' => $targetPath,
         ]);
@@ -144,11 +147,13 @@ class UploadController extends Controller
         $folder = $this->resolveFolder($request->input('folder'), $default);
 
         $file = $request->file('file');
-        $filename = Str::uuid()->toString().'.'.$file->extension();
+        $extension = $file->getClientOriginalExtension() ?: $file->extension() ?: 'mp4';
+        $filename = Str::uuid()->toString().'.'.$extension;
 
         $path = $file->storeAs($folder, $filename, 'public');
 
         return response()->json([
+            'status' => 'completed',
             'url' => MediaController::playableUrl($request, $path),
             'path' => $path,
         ]);
