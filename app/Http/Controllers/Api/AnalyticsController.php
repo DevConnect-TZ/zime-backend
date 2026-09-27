@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Video;
 use App\Models\VideoPlay;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -15,8 +16,10 @@ class AnalyticsController extends Controller
      * Play analytics for the admin dashboard: total lifetime views, per-day
      * counts for the last 30 days, and per-week counts for the last 12 weeks.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        abort_unless($request->user()?->isAdmin(), 403, 'Unauthorized.');
+
         $today = Carbon::today();
         $dailySince = $today->copy()->subDays(29);
         $weeklySince = $today->copy()->subWeeks(11)->startOfWeek();

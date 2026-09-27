@@ -15,8 +15,10 @@ class SettingController extends Controller
      * Payment gateway configuration for the admin panel. Secrets are never
      * returned; only whether the provider is already configured.
      */
-    public function gatewaySettings(PaymentService $payments): JsonResponse
+    public function gatewaySettings(Request $request, PaymentService $payments): JsonResponse
     {
+        abort_unless($request->user()?->isAdmin(), 403, 'Unauthorized.');
+
         return response()->json([
             'data' => [
                 'provider' => $payments->activeProvider(),
@@ -33,6 +35,8 @@ class SettingController extends Controller
      */
     public function updateGatewaySettings(Request $request, PaymentService $payments): JsonResponse
     {
+        abort_unless($request->user()?->isAdmin(), 403, 'Unauthorized.');
+
         $validated = $request->validate([
             'provider' => ['required', 'string', Rule::in(PaymentService::SUPPORTED_GATEWAYS)],
         ]);

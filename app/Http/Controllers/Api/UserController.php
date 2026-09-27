@@ -14,8 +14,10 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
+        abort_unless($request->user()?->isAdmin(), 403, 'Unauthorized.');
+
         return UserResource::collection(
             User::query()->with('purchases')->latest()->get()
         );
@@ -23,6 +25,8 @@ class UserController extends Controller
 
     public function updateRole(Request $request, User $user): UserResource
     {
+        abort_unless($request->user()?->isAdmin(), 403, 'Unauthorized.');
+
         $validated = $request->validate([
             'role' => ['required', Rule::in([User::ROLE_USER, User::ROLE_UPLOADER, User::ROLE_ADMIN])],
         ]);
@@ -36,6 +40,8 @@ class UserController extends Controller
 
     public function updateStatus(Request $request, User $user): UserResource
     {
+        abort_unless($request->user()?->isAdmin(), 403, 'Unauthorized.');
+
         $validated = $request->validate([
             'status' => ['required', Rule::in([User::STATUS_ACTIVE, User::STATUS_BANNED])],
         ]);
@@ -61,6 +67,8 @@ class UserController extends Controller
      */
     public function unlockVideo(Request $request, User $user): JsonResponse
     {
+        abort_unless($request->user()?->isAdmin(), 403, 'Unauthorized.');
+
         $validated = $request->validate([
             'video_id' => ['required', 'string', 'max:64'],
         ]);
