@@ -69,7 +69,11 @@ class MediaController extends Controller
             return $stored;
         }
 
-        $url = $request->getSchemeAndHttpHost().'/api/media/'.$relative;
+        $base = $request->getSchemeAndHttpHost();
+        $prefix = (str_contains($request->getBaseUrl(), 'index.php') || app()->environment('production'))
+            ? '/index.php/api/media/'
+            : '/api/media/';
+        $url = $base.$prefix.$relative;
 
         // Gated media is played through a plain <video> tag, which cannot attach
         // auth headers, so the short-lived access token is carried as a query
