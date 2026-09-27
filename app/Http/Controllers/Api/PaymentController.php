@@ -88,6 +88,8 @@ class PaymentController extends Controller
 
     public function updateGateway(Request $request): JsonResponse
     {
+        abort_unless($request->user()?->isAdmin(), 403, 'Unauthorized.');
+
         $validated = $request->validate([
             'provider' => ['required', 'string', Rule::in(PaymentService::SUPPORTED_GATEWAYS)],
         ]);
